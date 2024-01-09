@@ -1,50 +1,46 @@
 import { StyleSheet, Text, View } from 'react-native'
-import React, { useCallback, useContext, useLayoutEffect, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useLayoutEffect, useState } from 'react'
 import { Bubble, GiftedChat, Send } from 'react-native-gifted-chat'
 import { AuthContext } from '../../context/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faPaperPlane } from '@fortawesome/free-regular-svg-icons';
 import { faAngleDoubleDown, faCircleArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { ChatContext } from '../../context/ChatContext';
+import { BaseURL, getRequest, postRequest } from '../../services';
+import axios from 'axios';
 
 const MessageScreen = ({ route, navigation }) => {
-    const { name,recipientId,chatId } = route.params;
+    const { name,recipientId,chatId,recipientUserAvatar } = route.params;
   const { userInfo } = useContext(AuthContext);
   const {messages, setMessages} = useContext(ChatContext)
-    console.log(name, recipientId,userInfo.user._id, chatId);
+    // console.log(name, recipientId,userInfo.user._id, chatId,recipientUserAvatar);
+   
     
-  useLayoutEffect(() => {
+    useEffect(() => {
+    // setMessages(newArr)
     
-
-    setMessages([
-      {
-        _id: 1,
-        text: 'Hello developer',
-        createdAt: new Date(),
-        user: {
-          _id: 2,
-          name: 'React Native',
-          avatar: 'https://res.cloudinary.com/dyeftbxjw/image/upload/v1704140193/avatar/default.png',
-        },
-      },
-      {
-        _id: 2,
-        text: 'Hello sup',
-        createdAt: new Date(),
-        user: {
-          _id: 1,
-          name: 'React Native',
-          avatar: 'https://res.cloudinary.com/dyeftbxjw/image/upload/v1704140193/avatar/default.png',
-        },
-      },
-    ])
   }, [])
 
-  const onSend = useCallback((messages = []) => {
-    setMessages(previousMessages =>
-      GiftedChat.append(previousMessages, messages),
-    )
-  }, [])
+  const onSend = useCallback(async(messages = []) => {
+    setMessages(previousMessages => GiftedChat.append(previousMessages, messages))
+    const data = messages[0]
+    data.senderId =  userInfo.user._id
+    data.chatId =  chatId
+    console.log('data',data);
+    
+    try {
+      const response = await postRequest(
+        `${BaseURL}/api/v1/message/create-message`,
+        JSON.stringify(data),
+      );
+      console.log('rD',response.data.response);
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+    
+    
+    
+}, []);
     const renderSend = (props) => {
         return(
             <Send {...props}>
@@ -81,13 +77,7 @@ const MessageScreen = ({ route, navigation }) => {
     )
   }
   return (
-    // <View>
-    //     <Text>{name}</Text>
-    //     <Text>{recipientId}</Text>
-    //     <Text>{userInfo.user._id}</Text>
-    // </View>
-
-    <GiftedChat
+     <GiftedChat
     messages={messages}
     onSend={messages => onSend(messages)}
     user={{

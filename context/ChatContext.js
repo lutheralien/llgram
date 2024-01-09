@@ -1,5 +1,6 @@
 import {createContext, useCallback, useEffect, useState} from 'react';
 import {BaseURL, getRequest, postRequest} from '../services';
+import axios from 'axios';
 
 export const ChatContext = createContext();
 
@@ -82,13 +83,39 @@ export const ChatContextProvider = ({children, user}) => {
     const getMessages = async () => {
         try {
           setIsMessagesLoading(true);
-          setMessages(null);
           const response = await getRequest(
             `${BaseURL}/api/v1/message/get-all-messages/${currentChat._id}`,
           );
-            console.log('msgsswdw', messages);
-             console.log(Array.isArray(messages));
-          setMessages(response.data.messages)
+          const userFilteredArray = response.data.messages.filter(item => item.senderId === user._id);
+           const userNewFilteredArray = userFilteredArray.map(item => ({
+      ...item,
+      user: {
+        _id: 1,
+      }
+    }));
+          const recipientFilteredArray = response.data.messages.filter(item => item.senderId !== user._id);
+          const recipientNewFilteredArray = recipientFilteredArray.map(item => ({
+      ...item,
+      user: {
+        _id: 2,
+        // avatar: recipientUserAvatar, // Replace with the actual avatar URL or value
+      }
+    }));
+
+        const recipientInfo = await axios.get(`${BaseURL}/api/v1/user/find-user/${recipientNewFilteredArray[0].senderId}`)
+        // console.log('recipient info', recipientInfo.data.data.avatar);
+
+        const recipientNewFilteredArray2 = recipientNewFilteredArray.map(item => ({
+            ...item,
+            user: {
+              avatar: recipientInfo.data.data.avatar, 
+            }
+          }));
+          const data = [...userNewFilteredArray, ...recipientNewFilteredArray2]
+          console.log('unsorted',data);
+          const sorted = data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+          console.log('sorted',sorted);
+          setMessages(sorted)
           setIsMessagesLoading(false);
 
         } catch (error) {

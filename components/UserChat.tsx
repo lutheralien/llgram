@@ -14,7 +14,7 @@ const UserChat = ({ chat, user }) => {
     // console.log('d', userChats);
     const handleData = () => {
 
-        navigation.navigate('message', { titleName: recipientUser?.username, name: recipientUser?.username, recipientId: recipientUser?._id, chatId: chat._id })
+        navigation.navigate('message', { titleName: recipientUser?.username, name: recipientUser?.username, recipientId: recipientUser?._id, chatId: chat._id,recipientUserAvatar: recipientUser?.avatar })
         console.log('handle');
         
         updateCurrentChat(chat)
